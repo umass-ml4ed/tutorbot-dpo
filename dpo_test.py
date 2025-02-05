@@ -8,11 +8,54 @@ import torch
 from trl import DPOTrainer, DPOConfig
 import random
 
+def create_dataset(data):
+    remove_label = True
+    format_data = []
+
+    format_conversation_student, format_conversation_teacher = [], []
+    student_responses, teacher_responses = [], []
+    for idx, row in data.iterrows():
+        conversation = row["conversation"].split("|EOM|")
+        format_conversation = []
+        for sentence in conversation: 
+            index = sentence.find(":")
+            role = sentence[:index]
+            response = sentence[index+1:]
+            if role == "Teacher" and remove_label:
+                response = " " + ")".join(response.split(")")[1:])
+            format_conversation.append([role, response])
+        format_data.append(format_conversation)
+        conversation_student, response_student, conversation_teacher, response_teacher = [], [], [], []
+        for idx, con in enumerate(format_conversation):
+            if con[0] != "Teacher":
+                previous = " \n".join([":".join(i) for i in format_conversation[:idx]])
+                conversation_student.append(previous)
+                response = format_conversation[idx][1].strip()
+                response_student.append(response)
+            if con[0] == "Teacher":
+                previous = " \n".join([":".join(i) for i in format_conversation[:idx]])
+                conversation_teacher.append(previous)
+                response = format_conversation[idx][1].strip()
+                response_teacher.append(response)
+            
+        format_conversation_student.append(conversation_student)
+        student_responses.append(response_student)
+        format_conversation_teacher.append(conversation_teacher)
+        teacher_responses.append(response_teacher)
+
+    data["format_data"] = format_data
+    data["format_conversation_student"] = format_conversation_student
+    data["student_responses"] = student_responses
+    data["format_conversation_teacher"] = format_conversation_teacher
+    data["teacher_responses"] = teacher_responses
+    return data
 
 
 def main(args):
     data = pd.read_csv("data/train.csv")
     responses = pd.read_csv(args.input_dir, index_col = 0)
+
+    data = create_dataset(data)
 
     teacher_responses = []
     for idx, row in data[0:args.input_count].iterrows():
