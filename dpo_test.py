@@ -54,16 +54,34 @@ def create_dataset(data):
 def main(args):
     data = pd.read_csv("data/train.csv")
     responses = pd.read_csv(args.input_dir, index_col = 0)
+    bad_responses = pd.read_csv(args.input_dir_bad, index_col=0)
 
     data = create_dataset(data)
 
-    teacher_responses = []
+    teacher_responses, question, profile, incorrect_answer, conversation = [], [], [], [], []
     for idx, row in data[0:args.input_count].iterrows():
-        for response in row["teacher_responses"]:
+        
+        for idx, response in enumerate(row["teacher_responses"]):
             teacher_responses.append(response)
-
+            question.append(row["question"])
+            profile.append(row["student_profile"])
+            incorrect_answer.append(row["student_incorrect_solution"])
+            conversation.append(row["format_conversation_teacher"][idx])
+    
+    
     responses["real_responses"] = teacher_responses
-
+    responses["profiles"] = profile
+    responses["question"] = question
+    responses["incorrect_answer"] = incorrect_answer
+    responses["conversation"] = conversation
+    
+    bad_responses = bad_responses[bad_responses["number"] < args.input_count]
+    bad_teacher_responses = []
+    
+    for idx, row in bad_responses.iterrows():
+        bad_teacher_responses.append(row["responses"])
+    
+    responses["bad_responses"] = bad_teacher_responses
 
     # Hugging Face model id
     model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct" # replace with your model id
@@ -95,13 +113,15 @@ def main(args):
     eval_dataset = dpo_dataset["test"]
 
 
-
     # Hugging Face model id
     model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct" # replace with your model id
 
     # BitsAndBytesConfig int-4 config
     bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True, bnb_4bit_use_double_quant=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16
+        load_in_4bit=True, 
+        bnb_4bit_use_double_quant=True, 
+        bnb_4bit_quant_type="nf4", 
+        bnb_4bit_compute_dtype=torch.bfloat16
     )
 
     # Load model and tokenizer
@@ -115,7 +135,7 @@ def main(args):
     )
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.padding_side = 'left' # to prevent errors with FA
+    tokenizer.padding_side = 'left'
     tokenizer.truncation_side = 'left' # to prevent cutting off last generation
 
 
@@ -138,7 +158,7 @@ def main(args):
         loss_type = "sigmoid",
         generate_during_eval=False,
         precompute_ref_log_probs=True,          # Avoid re-calculating reference model log probs every epoch
-        output_dir=args.output_dir,             # directory to save and repository id (!!)
+        output_dir=args.output_dir,             # directory to save
         num_train_epochs=args.epochs,           # number of training epochs
         per_device_train_batch_size=12,         # batch size per device during training
         per_device_eval_batch_size=4,           # batch size for evaluation
@@ -155,8 +175,8 @@ def main(args):
         evaluation_strategy="steps",            # evaluate every 1000 steps
         eval_steps=50,                          # when to evaluate
         bf16=True,                              # use bfloat16 precision !!! VERY IMPORTANT
-        push_to_hub=False,                      # push model to hub
-        report_to="none"                        # present results (!!)
+        push_to_hub=False,                      
+        report_to="none"                        
     )
 
     trainer = DPOTrainer(
@@ -179,6 +199,7 @@ def main(args):
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("intput_dir", type=str, help="input data file")
+    parser.add_argument("input_dir_bad", type=str, help="input data file (bad)")
     parser.add_argument("output_dir", type=str, help="output directory", default="test")
     parser.add_argument("input_count", type=int, help="number of data for input", default=500)
     parser.add_argument("epochs", type=int, help="number of epochs", default=1)
