@@ -1,5 +1,5 @@
 # educational_chatbot
-data folder: train and test data from Mathdial
+data folder: train and test data from Mathdial: https://github.com/eth-nlped/mathdial
 
 synthetic_teacher: creating synthetic data (uncleaned)
 
