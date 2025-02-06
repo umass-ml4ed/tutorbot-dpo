@@ -153,7 +153,7 @@ def main(args):
     args = DPOConfig(
         model_adapter_name="default",
         beta = 0.1,
-        max_length=1024,
+        max_length=4096,
         max_prompt_length=4096,
         loss_type = "sigmoid",
         generate_during_eval=False,
