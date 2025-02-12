@@ -1,14 +1,19 @@
-# educational_chatbot
-data folder: train and test data from Mathdial: https://github.com/eth-nlped/mathdial
+# Tutorbot-DPO
 
-synthetic_teacher: creating synthetic data (uncleaned)
+## Training and Testing
+### SFT
+```
+python main.py sft --model_name sft-8b
+```
 
-sft: sft fine-tuning (uncleaned)
+### DPO
+```
+python main.py dpo --model_name dpo-8b --pt_model_name sft-8b
+```
 
-dpo_test: dpo fine-tuning (cleaned)
+### Test
+```
+python main.py test --model_name dpo-8b
+```
 
-prompt_gpt: prompting gpt-4o model for evaluation (uncleaned)
-
-
-Dataset stored: 
-https://rice.box.com/s/jqb5w5vap76k5m3kk4gw7n10o72d64sm
+# TODO: overgeneration, different evals
