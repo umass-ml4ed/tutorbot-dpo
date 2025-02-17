@@ -71,8 +71,8 @@ def llmkt_eval(args):
     model, tokenizer = get_model("meta-llama/Meta-Llama-3.1-8B-Instruct", True, model_name="lmkt_mathdial_r16_lr2e-4_mean-ar", quantize=False)
 
     # Load data - get tutor turn candidates and merge with annotated dialogue KT data
-    df = get_expanded_turns(args)
-    src_split = "train" if args.eval_src == "overgen" or args.on_train else "test"
+    df = get_expanded_turns(args.eval_src, args.eval_path, args.truncate, args)
+    src_split = "train" if args.eval_src == "overgen" or args.on_train or args.on_val else "test"
     data_cols = ["dialogue", "annotation", "meta_data"]
     annotated_df = pd.read_csv(f"dialogue-kt/data/annotated/mathdial_{src_split}_atc.csv", converters={col: literal_eval for col in data_cols})
     df = df.merge(annotated_df[["index", *data_cols]], on="index", how="inner")
@@ -97,9 +97,12 @@ def llmkt_eval(args):
     # Compute stats and save results
     cp_df = pd.DataFrame(all_corr_probs)
     df = df.merge(cp_df, left_index=True, right_on="row_id", how="inner")
-    print(f"Avg correctness probability: {df['corr_pred'].mean():.2f}")
+    avg_score = df["corr_pred"].mean()
+    print(f"Avg correctness probability: {avg_score:.4f}")
     if args.eval_src in ("results", "overgen"):
-        df.to_csv(args.eval_path.replace(".csv", "_llmkt_eval.csv"), index=False)
+        out_filename = args.eval_path.replace(".csv", "_llmkt_eval.csv")
     elif args.eval_src == "ground-truth":
         split = "train" if args.on_train else "test"
-        df.to_csv(f"data/overgen/{split}_llmkt_eval.csv", index=False)
+        out_filename = f"results/{split}_llmkt_eval.csv"
+    df.to_csv(out_filename, index=False)
+    return out_filename, avg_score

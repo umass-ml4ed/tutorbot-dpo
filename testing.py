@@ -5,13 +5,14 @@ from transformers import PreTrainedTokenizer
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
-from model import get_base_model, get_model
+from model import get_base_model, get_model, get_unsloth_model
 from data_loading import get_mathdial_test_data, get_mathdial_train_data
 from prompting import get_prompt
-from utils import device, get_model_file_suffix
+from eval_results import eval_results
+from utils import device, get_model_file_suffix, run_gc
 
 class TestingDataset(Dataset):
-    def __init__(self, data: pd.DataFrame, tokenizer: PreTrainedTokenizer):
+    def __init__(self, data: pd.DataFrame, tokenizer: PreTrainedTokenizer, args):
         self.data = []
         for index, sample in data.iterrows():
             starting_turn = 0 if sample["turns"][0]["role"] == "assistant" else 1
@@ -21,7 +22,7 @@ class TestingDataset(Dataset):
                     **sample,
                     "turn_idx": turn_idx,
                     "gt_turn": sample["turns"][turn_idx]["content"],
-                    "prompt": get_prompt(sample, tokenizer, turn_idx)
+                    "prompt": get_prompt(sample, tokenizer, turn_idx, args)
                 })
         print(f"Num dialogues: {len(data)}, num tutor turns: {len(self.data)}")
 
@@ -46,18 +47,24 @@ class TestingCollator:
 
 def test(args):
     # Load model
-    base_model, tokenizer = get_base_model(args.base_model, args.quantize)
-    model = get_model(base_model, True, model_name=args.model_name, quantize=args.quantize)
+    if "unsloth" in args.base_model:
+        base_model = None
+        model, tokenizer = get_unsloth_model(args.base_model)
+    else:
+        base_model, tokenizer = get_base_model(args.base_model, args.quantize)
+        model = get_model(base_model, True, model_name=args.model_name, quantize=args.quantize)
 
     # Load data
     if args.on_train:
         train_data, val_data = get_mathdial_train_data()
         data = pd.concat([train_data, val_data])
+    elif args.on_val:
+        _, data = get_mathdial_train_data()
     else:
         data = get_mathdial_test_data()
+    dataset = TestingDataset(data, tokenizer, args)
     if args.truncate:
-        data = data[:args.truncate]
-    dataset = TestingDataset(data, tokenizer)
+        dataset.data = dataset.data[:args.truncate]
     collator = TestingCollator(tokenizer)
     data_loader = DataLoader(dataset, args.test_batch_size, collate_fn=collator, shuffle=False)
 
@@ -84,8 +91,16 @@ def test(args):
     )
     print("Turn similarity:", rouge_metrics)
 
-    # Save results
+    # Free up memory
+    del base_model, model
+    run_gc()
+
+    # Save results and run different evals
     os.makedirs("results", exist_ok=True)
     results_df = pd.DataFrame(results)
-    split = "train" if args.on_train else "test"
-    results_df.to_csv(f"results/outputs_{split}_{get_model_file_suffix(args)}.csv")
+    split = "train" if args.on_train else "val" if args.on_val else "test"
+    out_filename = f"results/outputs_{split}_{get_model_file_suffix(args)}.csv"
+    results_df.to_csv(out_filename, index=False)
+    args.eval_src = "results"
+    args.eval_path = out_filename
+    eval_results(args)

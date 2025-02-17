@@ -31,4 +31,6 @@ def get_checkpoint_path(model_name: str):
 def get_model_file_suffix(args):
     if args.model_name:
         return args.model_name
-    return args.base_model.replace("/", "-")
+    model_name = args.base_model.replace("/", "-")
+    if args.detail_sys_prompt:
+        model_name += "_dsp"

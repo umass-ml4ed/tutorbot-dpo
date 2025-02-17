@@ -2,16 +2,24 @@ from typing import Union, Tuple, List
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, PreTrainedModel, PreTrainedTokenizer
 from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
+try:
+    # Fails when using regular virtual env (incompatible with trl)
+    from unsloth import FastLanguageModel
+except Exception as exc:
+    print("Failed to import unsloth:", exc)
 
 from utils import get_checkpoint_path
 
-# bnb_config = BitsAndBytesConfig(
-#     load_in_8bit=True,
-# )
-
-bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True
-)
+def get_unsloth_model(base_model_name: str) -> Tuple[PreTrainedModel, PreTrainedTokenizer]:
+    model, tokenizer = FastLanguageModel.from_pretrained(
+        model_name=base_model_name,
+        max_seq_length=8_000,
+        dtype=None, # Auto-detect
+        load_in_4bit=True,
+        device_map={"": 0}
+    )
+    FastLanguageModel.for_inference(model)
+    return model, tokenizer
 
 def get_base_model(base_model_name: str, quantize: bool) -> Tuple[PreTrainedModel, PreTrainedTokenizer]:
     tokenizer = AutoTokenizer.from_pretrained(base_model_name)
@@ -20,7 +28,12 @@ def get_base_model(base_model_name: str, quantize: bool) -> Tuple[PreTrainedMode
     base_model = AutoModelForCausalLM.from_pretrained(
         base_model_name,
         pad_token_id=tokenizer.pad_token_id,
-        quantization_config=bnb_config if quantize else None,
+        quantization_config=BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_use_double_quant=True
+        ) if quantize else None,
         # f32 seems helpful for train/test time consistency when quantizing, bf16 performs best for non-quantized
         torch_dtype=torch.float32 if quantize else torch.bfloat16,
         device_map={"": 0}

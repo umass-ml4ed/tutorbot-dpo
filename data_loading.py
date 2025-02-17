@@ -47,12 +47,12 @@ def get_mathdial_test_data():
     test_df["turns_all"] = test_df["conversation"].apply(partial(process_dialogue, False))
     return test_df
 
-def get_expanded_turns(args):
+def get_expanded_turns(src: str, path: str, truncate: int, args):
     # Load turn-level data from file based on source
-    if args.eval_src == "results":
-        df = pd.read_csv(args.eval_path, converters={"turns": literal_eval})
-    elif args.eval_src == "overgen":
-        df = pd.read_csv(args.eval_path, converters={"responses": literal_eval})
+    if src == "results":
+        df = pd.read_csv(path, converters={"turns": literal_eval})
+    elif src == "overgen":
+        df = pd.read_csv(path, converters={"responses": literal_eval})
         df["pred_turn"] = df["responses"].apply(lambda x: x[1])
         train_df, val_df = get_mathdial_train_data()
         src_df = pd.concat([train_df, val_df])
@@ -73,7 +73,7 @@ def get_expanded_turns(args):
                     all_turn_counter += 1
                     turn_idx += 2
         df = pd.DataFrame(indexed_data)
-    elif args.eval_src == "ground-truth":
+    elif src == "ground-truth":
         if args.on_train:
             train_df, val_df = get_mathdial_train_data()
             df = pd.concat([train_df, val_df])
@@ -90,6 +90,7 @@ def get_expanded_turns(args):
                         "turn_idx": turn_idx
                     })
         df = pd.DataFrame(expanded_data)
-    if args.truncate:
-        df = df[:args.truncate]
+    df = df.sort_values(["index", "turn_idx"]) # So that when we truncate we're looking at the same rows
+    if truncate:
+        df = df[:truncate]
     return df
