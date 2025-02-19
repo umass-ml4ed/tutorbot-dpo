@@ -5,7 +5,7 @@ from transformers import PreTrainedTokenizer
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
-from model import get_base_model, get_model, get_unsloth_model
+from model import get_base_model, get_model
 from data_loading import get_mathdial_test_data, get_mathdial_train_data
 from prompting import get_prompt
 from eval_results import eval_results
@@ -47,12 +47,8 @@ class TestingCollator:
 
 def test(args):
     # Load model
-    if "unsloth" in args.base_model:
-        base_model = None
-        model, tokenizer = get_unsloth_model(args.base_model)
-    else:
-        base_model, tokenizer = get_base_model(args.base_model, args.quantize)
-        model = get_model(base_model, True, model_name=args.model_name, quantize=args.quantize)
+    base_model, tokenizer = get_base_model(args.base_model, args.quantize)
+    model = get_model(base_model, True, model_name=args.model_name, quantize=args.quantize)
 
     # Load data
     if args.on_train:

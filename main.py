@@ -7,7 +7,6 @@ from prompting_baseline import prompting_baseline
 from llm_eval import llm_eval
 from llmkt_eval import llmkt_eval
 from eval_results import eval_results
-from human_eval import human_eval_create, human_eval_analyze
 from utils import initialize_seeds, bool_type
 
 DEFAULTS_3B = {
@@ -27,7 +26,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     # General
-    parser.add_argument("mode", choices=["sft", "dpo", "test", "test_prompting", "eval", "llm_eval", "llmkt_eval", "human_eval_create", "human_eval_analyze"])
+    parser.add_argument("mode", choices=["sft", "dpo", "test", "test_prompting", "eval", "llm_eval", "llmkt_eval"])
     parser.add_argument("--truncate", type=int)
     parser.add_argument("--wandb", action="store_true")
     # Evaluation
@@ -37,7 +36,7 @@ def main():
     parser.add_argument("--eval_path")
     parser.add_argument("--use_cached_llmkt_eval", action="store_true")
     # Modeling
-    parser.add_argument("--base_model", default="meta-llama/Meta-Llama-3.1-8B-Instruct") # "meta-llama/Meta-Llama-3.1-8B-Instruct" "meta-llama/Llama-3.2-3B-Instruct" "unsloth/Llama-3.3-70B-Instruct-bnb-4bit"
+    parser.add_argument("--base_model", default="meta-llama/Meta-Llama-3.1-8B-Instruct") # "meta-llama/Meta-Llama-3.1-8B-Instruct" "meta-llama/Llama-3.2-3B-Instruct"
     parser.add_argument("--model_name")
     parser.add_argument("--pt_model_name")
     parser.add_argument("--detail_sys_prompt", action="store_true")
@@ -60,7 +59,7 @@ def main():
     # DPO
     parser.add_argument("--dpo_data_srcs", default="gt,4o,8b,3b")
     parser.add_argument("--beta", type=float, default=0.1, help="Beta parameter for DPO")
-    parser.add_argument("--corr_weight", type=float, help="Amount to weigh correctness prediction in score calculation; between 0 and 1")
+    parser.add_argument("--corr_weight", type=float, default=0.5, help="Amount to weigh correctness prediction in score calculation; between 0 and 1")
     parser.add_argument("--score_threshold", type=float, default=0.1, help="Score threshold to surpass to form a preference pair")
     parser.add_argument("--true_score", type=bool_type, default=False)
     parser.add_argument("--dpo_loss_type", default="sigmoid")
@@ -95,10 +94,6 @@ def main():
     elif args.mode == "eval":
         assert args.openai_model and args.eval_src
         eval_results(args)
-    elif args.mode == "human_eval_create":
-        human_eval_create()
-    elif args.mode == "human_eval_analyze":
-        human_eval_analyze()
 
 if __name__ == "__main__":
     main()

@@ -2,24 +2,7 @@ from typing import Union, Tuple, List
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, PreTrainedModel, PreTrainedTokenizer
 from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
-try:
-    # Fails when using regular virtual env (incompatible with trl)
-    from unsloth import FastLanguageModel
-except Exception as exc:
-    print("Failed to import unsloth:", exc)
-
 from utils import get_checkpoint_path
-
-def get_unsloth_model(base_model_name: str) -> Tuple[PreTrainedModel, PreTrainedTokenizer]:
-    model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name=base_model_name,
-        max_seq_length=8_000,
-        dtype=None, # Auto-detect
-        load_in_4bit=True,
-        device_map={"": 0}
-    )
-    FastLanguageModel.for_inference(model)
-    return model, tokenizer
 
 def get_base_model(base_model_name: str, quantize: bool) -> Tuple[PreTrainedModel, PreTrainedTokenizer]:
     tokenizer = AutoTokenizer.from_pretrained(base_model_name)

@@ -34,3 +34,4 @@ def get_model_file_suffix(args):
     model_name = args.base_model.replace("/", "-")
     if args.detail_sys_prompt:
         model_name += "_dsp"
+    return model_name

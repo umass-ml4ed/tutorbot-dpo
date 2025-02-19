@@ -2,15 +2,8 @@
 
 ## Setup
 
-### For 70B
-Special setup needed to run 70B model with unsloth.
-https://docs.unsloth.ai/get-started/installing-+-updating/pip-install
-```
-python -m venv tbu
-source tbu/bin/activate
-python -m pip install -r unsloth_requirements.txt
-python -m pip install "unsloth[cu124-torch250] @ git+https://github.com/unslothai/unsloth.git"
-```
+### Dialogue KT
+Clone repo and create symlink and set PYTHONPATH
 
 ## Overgeneration and Evaluation
 

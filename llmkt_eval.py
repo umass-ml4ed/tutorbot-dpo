@@ -22,6 +22,7 @@ class LMKTDatasetPacked(Dataset):
     # Adapted from dialogue-kt code
     def __init__(self, data: pd.DataFrame, tokenizer: PreTrainedTokenizer, args):
         self.data = []
+        unique_idxs = set()
         for row_id, sample in data.iterrows():
             turn_pair_idx = sample["turn_idx"] // 2
             if turn_pair_idx >= len(sample["dialogue"]): # Skip when beyond annotated turns (happens when tutor turn ends dialogue)
@@ -51,14 +52,15 @@ class LMKTDatasetPacked(Dataset):
             ]
             kc_conts = [" " + cont.split("user<|end_header_id|>\n\n")[1] for cont in kc_conts]
             prompt = prompt + "".join(kc_conts)
+            unique_idxs.add(sample["index"])
             self.data.append({
                 **sample,
                 "row_id": row_id,
                 "prompt": prompt,
-                "label": False, # Dummy value for collator
+                "label": cur_turn_annotation["correct"] or False,
                 "kcs": kcs
             })
-        print(f"Number of data points: {len(self.data)}")
+        print(f"Number of data points: {len(self.data)}, number of dialogues: {len(unique_idxs)}")
 
     def __len__(self):
         return len(self.data)

@@ -1,6 +1,7 @@
+*.sh
+*.csv
+*.pyc
 data/overgen
 data/src
 dialogue_kt
 dialogue-kt
-*.sh
-*.csv

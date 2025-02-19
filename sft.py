@@ -19,13 +19,15 @@ class SFTCombinedDataset(Dataset):
     def __init__(self, data: pd.DataFrame, tokenizer: PreTrainedTokenizer, args):
         self.data = []
         excluded = 0
+        num_turns = 0
         for _, sample in data.iterrows():
+            num_turns += round(len(sample["turns"]) / 2)
             prompt = get_prompt(sample, tokenizer, args=args)
             if len(prompt) < MAX_LEN:
                 self.data.append({**sample, "prompt": prompt})
             else:
                 excluded += 1
-        print(f"Num dialogues: {len(self.data)} ({excluded} excluded)")
+        print(f"Num dialogues: {len(self.data)} ({excluded} excluded), num turns: {num_turns}")
 
     def __len__(self):
         return len(self.data)
@@ -99,7 +101,6 @@ class SFTExpandedCollator:
             "attention_mask": attn_mask,
             "labels": labels
         }
-
 
 def get_training_args(args):
     return TrainingArguments(
