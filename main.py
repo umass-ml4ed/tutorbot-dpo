@@ -46,7 +46,7 @@ def main():
     parser.add_argument("--on_val", action="store_true", help="Run testing/evaluation on val set; use for hyperparameter search")
     parser.add_argument("--train_batch_size", type=int, help="Batch size at train-time")
     parser.add_argument("--test_batch_size", type=int, help="Batch size at test-time")
-    parser.add_argument("--epochs", type=int, default=5, help="Number of training epochs")
+    parser.add_argument("--epochs", type=int, default=3, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate")
     parser.add_argument("--wd", type=float, default=1e-2, help="Weight decay")
     parser.add_argument("--gc", type=float, default=1.0, help="Gradient clipping norm")
