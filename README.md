@@ -1,8 +1,17 @@
 # Tutorbot-DPO
-This is the official code for the paper <a href="">Training LLM-based Tutors to Improve Student Learning Outcomes in Dialogues</a>. We introduce a method for training tutorbots using DPO, where they are trained to maximize the likelihood of eliciting correct student responses, while simultaneously adhering to pedagogical principles.
+This is the official code for the paper <a href="https://arxiv.org/abs/2503.06424">Training LLM-based Tutors to Improve Student Learning Outcomes in Dialogues</a>. We introduce a method for training tutorbots using DPO, where they are trained to maximize the likelihood of eliciting correct student responses while simultaneously adhering to pedagogical principles.
 
 If you found our research or code useful for your work, then please cite us!
 ```
+@misc{scarlatos2025trainingllmbasedtutorsimprove,
+      title={Training LLM-based Tutors to Improve Student Learning Outcomes in Dialogues}, 
+      author={Alexander Scarlatos and Naiming Liu and Jaewook Lee and Richard Baraniuk and Andrew Lan},
+      year={2025},
+      eprint={2503.06424},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2503.06424}, 
+}
 ```
 
 ## Setup
