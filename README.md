@@ -4,7 +4,7 @@ This is the official code for the paper <a href="https://arxiv.org/abs/2503.0642
 If you found our research or code useful for your work, then please cite us!
 ```
 @InProceedings{scarlatos2025trainingllmbasedtutorsimprove,
-    title="Training LLM-Based Tutors to Improve Student Learning Outcomes in Dialogues",
+    title="Training LLM-Based Tutors to Improve Student Learning Outcomes in Dialogues",
     author="Scarlatos, Alexander and Liu, Naiming and Lee, Jaewook and Baraniuk, Richard and Lan, Andrew",
     editor="Cristea, Alexandra I. and Walker, Erin and Lu, Yu and Santos, Olga C. and Isotani, Seiji",
     booktitle="Artificial Intelligence in Education",
